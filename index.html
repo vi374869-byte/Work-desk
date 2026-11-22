@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c13fb0">
+  <meta name="description" content="Work Desk: a calm writing studio for novelists.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Work Desk">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Work Desk</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="write">
+
+  <!-- ================= TOP BAR ================= -->
+  <header class="topbar">
+    <button id="btnMenu" class="icon-btn menu-btn" title="Chapters & notebook" aria-label="Open chapters and notebook">☰</button>
+    <button id="btnLibrary" class="brand" title="Your library of books"><img class="brand-icon" src="assets/icon-64.png" alt=""> <span class="brand-name">Work Desk</span></button>
+    <input id="projectTitle" class="project-title" spellcheck="false" aria-label="Book title">
+    <nav class="views" id="viewSwitch">
+      <button data-view="write" class="active">Write</button>
+      <button data-view="board">Corkboard</button>
+      <button data-view="timeline">Timeline</button>
+      <button data-view="map">Character map</button>
+    </nav>
+    <div class="topbar-actions">
+      <div id="presenceBar" class="presence-bar"></div>
+      <span id="roleBadge" class="role-badge" hidden></span>
+      <span id="syncBadge" class="sync-badge" hidden></span>
+      <span id="saveStatus" class="save-status">Saved</span>
+      <button id="btnInstall" class="btn install-btn" title="Install Work Desk as an app on this device" hidden>📲 <span class="lbl">Install</span></button>
+      <button id="btnShare" class="btn" title="Share this book and write together">👥 <span class="lbl">Share</span></button>
+      <button id="btnChat" class="btn" title="Chat with your co-writers" hidden>💬 <span class="lbl">Chat</span> <span id="chatBadge" class="badge" hidden></span></button>
+      <button id="btnDetails" class="btn details-btn" title="Chapter details, comments, snapshots, progress">ⓘ</button>
+      <button id="btnFind" class="btn" title="Find & replace in the whole book (Ctrl+Shift+F)">🔍 <span class="lbl">Find</span></button>
+      <button id="btnFocus" class="btn" title="Focus mode: only the page (Esc to exit)">Focus</button>
+      <div class="menu">
+        <button id="btnFile" class="btn" aria-haspopup="true" title="File">📁 <span class="lbl">File</span> ▾</button>
+        <div class="menu-list" id="fileMenu" hidden>
+          <button data-action="library">Library: all books</button>
+          <button data-action="newBook">New book</button>
+          <button data-action="importText">Import book from text file…</button>
+          <button data-action="cover">Book cover…</button>
+          <hr>
+          <button data-action="open">Open book file…</button>
+          <button data-action="save">Save book file <kbd>Ctrl+S</kbd></button>
+          <button data-action="saveAs">Save book file as…</button>
+          <hr>
+          <button data-action="backup">Back up all books…</button>
+          <button data-action="restore">Restore from backup…</button>
+          <hr>
+          <button data-action="exportTxt">Export manuscript as .txt</button>
+          <button data-action="exportMd">Export manuscript as .md</button>
+          <button data-action="exportHtml">Export manuscript as .html</button>
+          <button data-action="print">Print / Save as PDF…</button>
+        </div>
+      </div>
+      <button id="btnSettings" class="btn" title="Settings">⚙ <span class="lbl">Settings</span></button>
+    </div>
+  </header>
+
+  <!-- ================= LIBRARY ================= -->
+  <section id="libraryScreen" class="library" hidden>
+    <div class="library-inner">
+      <div class="library-head">
+        <div>
+          <h1>Your library</h1>
+          <p id="libSummary" class="lib-summary"></p>
+        </div>
+        <div class="library-actions">
+          <button id="libInstall" class="btn install-btn" hidden>📲 Install app</button>
+          <button id="libBackup" class="btn" title="Save all books on this device into one file">💾 Back up</button>
+          <button id="libRestore" class="btn" title="Bring books back from a backup file">♻ Restore</button>
+          <button id="libJoin" class="btn" title="Join a book someone shared with you">👥 Join with invite code</button>
+          <button id="libImportText" class="btn" title="Turn a .txt or .md file into a new book">Import text file…</button>
+          <button id="libImport" class="btn">Open book file…</button>
+          <button id="libNew" class="btn primary">+ New book</button>
+        </div>
+      </div>
+      <div id="bookGrid" class="book-grid"></div>
+      <div class="lib-habits">
+        <h2>Last 5 weeks</h2>
+        <div id="libHeatmap" class="heatmap"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WORKSPACE ================= -->
+  <div class="layout" id="workspace">
+    <aside class="sidebar">
+      <section class="side-section">
+        <div class="section-head">
+          <h2>Manuscript</h2>
+          <button id="addChapter" class="icon-btn" title="Add chapter">+</button>
+        </div>
+        <ol id="chapterList" class="item-list"></ol>
+        <p class="hint">Drag chapters to reorder.</p>
+      </section>
+      <section class="side-section">
+        <div class="section-head"><h2>Notebook</h2></div>
+        <div class="tabs" id="noteTabs">
+          <button data-type="idea" class="active">Ideas</button>
+          <button data-type="character">People</button>
+          <button data-type="place">Places</button>
+          <button data-type="plot">Plot</button>
+        </div>
+        <ul id="noteList" class="item-list"></ul>
+        <button id="addNote" class="add-row">+ New idea</button>
+      </section>
+    </aside>
+
+    <main class="main" id="main">
+      <!-- Write: chapter -->
+      <section id="chapterView" class="view-pane">
+        <div class="toolbar" id="toolbar">
+          <button data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+          <button data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+          <button data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+          <span class="sep"></span>
+          <button data-block="p" title="Normal paragraph">¶</button>
+          <button data-block="h2" title="Heading">H</button>
+          <button data-block="blockquote" title="Quote / letter / inscription">❝</button>
+          <button data-cmd="insertUnorderedList" title="Bulleted list">•</button>
+          <button data-cmd="insertHorizontalRule" title="Scene break">⁂</button>
+          <span class="sep"></span>
+          <button data-cmd="undo" title="Undo (Ctrl+Z)">↶</button>
+          <button data-cmd="redo" title="Redo (Ctrl+Y)">↷</button>
+          <span class="sep"></span>
+          <button id="tbComment" title="Comment or note on this paragraph (Ctrl+Alt+M)">💬</button>
+          <button id="tbSticky" title="Add a sticky note to the page (never exported)">🗒</button>
+          <button id="tbStickyToggle" title="Show / hide sticky notes">👁</button>
+        </div>
+        <div class="page" id="writePage">
+          <input id="chapterTitle" class="chapter-title" placeholder="Chapter title" aria-label="Chapter title">
+          <div id="editor" class="editor" contenteditable="true" spellcheck="true"
+               data-placeholder="Start writing… your work saves automatically."></div>
+          <div id="commentRail" class="comment-rail" aria-label="Comments"></div>
+          <button id="commentAdd" class="comment-add" title="Add a comment or note to this paragraph" hidden>+</button>
+          <div id="commentPop" class="comment-pop" hidden></div>
+          <div id="stickyLayer" class="sticky-layer"></div>
+          <div id="presenceRail" class="presence-rail"></div>
+        </div>
+      </section>
+
+      <!-- Write: notebook entry -->
+      <section id="noteView" class="view-pane" hidden>
+        <div class="page">
+          <div class="note-kind" id="noteKind">Character</div>
+          <input id="noteTitle" class="chapter-title" placeholder="Name" aria-label="Note title">
+          <div id="appearsIn" class="appears-in" hidden></div>
+          <textarea id="noteBody" class="note-body" spellcheck="true"></textarea>
+          <div class="note-actions">
+            <button id="deleteNote" class="btn danger">Delete</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Corkboard -->
+      <section id="boardView" class="view-pane wide" hidden>
+        <div class="view-head">
+          <div>
+            <h1>Corkboard</h1>
+            <p class="view-sub">Every chapter as an index card. Drag the ⠿ handle to rearrange, edit summaries right on the card.</p>
+          </div>
+        </div>
+        <div id="boardGrid" class="board-grid"></div>
+      </section>
+
+      <!-- Timeline -->
+      <section id="timelineView" class="view-pane wide" hidden>
+        <div class="view-head">
+          <div>
+            <h1>Timeline</h1>
+            <p class="view-sub">Story events in the order they happen. Drag the ⠿ handle to reorder.</p>
+          </div>
+          <div class="view-tools">
+            <label class="inline-field">Highlight
+              <select id="timelineFilter"><option value="">Everyone</option></select>
+            </label>
+            <button id="addEvent" class="btn primary">+ Add event</button>
+          </div>
+        </div>
+        <div id="timelineList" class="timeline"></div>
+      </section>
+
+      <!-- Character map -->
+      <section id="mapView" class="view-pane wide" hidden>
+        <div class="view-head">
+          <div>
+            <h1>Character map</h1>
+            <p class="view-sub">Drag people to arrange them. Click a person to open their sheet.</p>
+          </div>
+        </div>
+        <form id="relForm" class="rel-form">
+          <select id="relFrom" aria-label="First person"></select>
+          <span>and</span>
+          <select id="relTo" aria-label="Second person"></select>
+          <span>are</span>
+          <select id="relKind" aria-label="Relationship type"></select>
+          <input id="relLabel" type="text" placeholder="Details (optional), e.g. older sister">
+          <button class="btn primary" type="submit">Connect</button>
+        </form>
+        <div class="map-wrap">
+          <svg id="mapSvg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet"></svg>
+          <div id="mapEmpty" class="map-empty" hidden></div>
+        </div>
+        <div id="mapLegend" class="map-legend"></div>
+        <ul id="relList" class="rel-list"></ul>
+      </section>
+    </main>
+
+    <aside class="details" id="detailsPanel">
+      <div id="chapterDetails">
+        <h2>Chapter</h2>
+        <label class="field">Status
+          <select id="chapterStatus">
+            <option value="idea">Idea</option>
+            <option value="draft">Draft</option>
+            <option value="revised">Revised</option>
+            <option value="done">Done</option>
+          </select>
+        </label>
+        <label class="field">Synopsis
+          <textarea id="chapterSynopsis" rows="5" placeholder="What happens in this chapter?"></textarea>
+        </label>
+        <div class="stat"><span>Words in chapter</span><strong id="statChapter">0</strong></div>
+
+        <div class="snap-head">
+          <h2>Comments &amp; notes</h2>
+          <button id="showResolved" class="btn small" title="Show or hide resolved comments">Show resolved</button>
+        </div>
+        <ul id="commentList" class="snap-list"></ul>
+
+        <div class="snap-head">
+          <h2>Snapshots</h2>
+          <button id="takeSnapshot" class="btn small" title="Save a copy of this chapter as it is now">+ Snapshot</button>
+        </div>
+        <ul id="snapList" class="snap-list"></ul>
+
+        <button id="deleteChapter" class="btn danger small">Delete chapter</button>
+      </div>
+
+      <div class="stats-block">
+        <h2>Progress</h2>
+        <div class="stat"><span>Book</span><strong id="statTotal">0</strong></div>
+        <div class="stat"><span>Chapters</span><strong id="statChapters">0</strong></div>
+        <div class="stat"><span>Written today</span><strong id="statToday">0</strong></div>
+        <div class="goal-bar"><div id="goalFill" class="goal-fill"></div></div>
+        <div class="goal-label" id="goalLabel">Daily goal: 500 words</div>
+        <div class="streak" id="streakBox"></div>
+        <div id="heatmap" class="heatmap small"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================= STATUS BAR ================= -->
+  <footer class="statusbar">
+    <span id="sbChapter">0 words</span>
+    <span id="sbTotal">0 total</span>
+    <span id="sbToday">Today 0 / 500</span>
+    <span id="sbStreak"></span>
+    <button id="sprintBtn" class="sprint-btn" title="Start a timed writing sprint">⏱ Sprint</button>
+    <span id="sbFile" class="sb-file"></span>
+  </footer>
+
+  <!-- Chat with co-writers (shared books only) -->
+  <aside id="chatPanel" class="chat-panel" hidden>
+    <div class="chat-head">
+      <div><strong>Chat</strong> <span id="chatOnline" class="muted-text"></span></div>
+      <button id="chatClose" class="icon-btn" title="Close chat">×</button>
+    </div>
+    <div id="chatList" class="chat-list"></div>
+    <form id="chatForm" class="chat-form">
+      <textarea id="chatInput" rows="2" placeholder="Message… (Enter to send)" maxlength="2000"></textarea>
+      <button class="btn primary" type="submit">Send</button>
+    </form>
+  </aside>
+
+ <div id="drawerBackdrop" class="drawer-backdrop"></div>
+
+  <div id="loadingOverlay" class="loading" hidden><div class="spinner"></div><span id="loadingText"></span></div>
+
+  <button id="exitFocus" class="exit-focus" title="Exit focus mode (Esc)">Exit focus</button>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- ================= DIALOGS ================= -->
+  <dialog id="settingsDialog">
+    <form method="dialog" class="dlg-form">
+      <h2>Settings</h2>
+      <label class="field">Author name
+        <input id="setAuthor" type="text" placeholder="Your name (used on exports of this book)">
+      </label>
+      <div class="field">Theme presets
+        <div class="presets" id="presets">
+          <button type="button" data-preset="lilac">Work Desk</button>
+          <button type="button" data-preset="paper">Paper</button>
+          <button type="button" data-preset="light">Light</button>
+          <button type="button" data-preset="dark">Dark</button>
+          <button type="button" data-preset="forest">Forest</button>
+          <button type="button" data-preset="midnight">Midnight</button>
+          <button type="button" data-preset="rose">Rose</button>
+        </div>
+      </div>
+      <div class="field">Your colors
+        <div class="color-grid">
+          <label><input type="color" id="colBg"> Background</label>
+          <label><input type="color" id="colPage"> Page</label>
+          <label><input type="color" id="colText"> Text</label>
+          <label><input type="color" id="colAccent"> Accent</label>
+        </div>
+      </div>
+      <label class="field">Font
+        <select id="setFont">
+          <option value="serif">Serif (Georgia)</option>
+          <option value="sans">Sans-serif (Segoe UI)</option>
+          <option value="mono">Typewriter (Consolas)</option>
+        </select>
+      </label>
+      <label class="field">Text size <span id="setSizeVal"></span>
+        <input id="setSize" type="range" min="14" max="28" step="1">
+      </label>
+      <label class="field">Page width <span id="setWidthVal"></span>
+        <input id="setWidth" type="range" min="45" max="100" step="1">
+      </label>
+      <label class="field">Daily word goal (used for streaks)
+        <input id="setGoal" type="number" min="0" step="50">
+      </label>
+      <div class="dialog-actions"><button class="btn primary" value="close">Done</button></div>
+    </form>
+  </dialog>
+
+  <!-- Find & replace (floating panel) -->
+  <dialog id="findDialog" class="find-panel">
+    <div class="find-head">
+      <h2>Find &amp; replace in book</h2>
+      <button id="findClose" class="icon-btn" title="Close (Esc)">×</button>
+    </div>
+    <input id="findInput" type="text" placeholder="Find…" autocomplete="off">
+    <input id="replaceInput" type="text" placeholder="Replace with…" autocomplete="off">
+    <div class="find-opts">
+      <label><input type="checkbox" id="findCase"> Match case</label>
+      <label><input type="checkbox" id="findWord"> Whole words</label>
+      <label><input type="checkbox" id="findNotes" checked> Notebook too</label>
+    </div>
+    <div class="find-summary" id="findSummary">Type to search every chapter.</div>
+    <div class="find-results" id="findResults"></div>
+    <div class="dialog-actions">
+      <button id="replaceAll" class="btn primary" disabled>Replace all</button>
+    </div>
+  </dialog>
+
+  <dialog id="eventDialog">
+    <form id="eventForm" class="dlg-form" method="dialog">
+      <h2 id="eventDlgTitle">Story event</h2>
+      <label class="field">What happens
+        <input id="evTitle" type="text" required placeholder="e.g. Mara finds the letter">
+      </label>
+      <label class="field">When (any wording you like)
+        <input id="evWhen" type="text" placeholder="e.g. Day 3, night · Spring 1846 · Age 12">
+      </label>
+      <label class="field">In chapter
+        <select id="evChapter"></select>
+      </label>
+      <div class="field">Who &amp; where
+        <div id="evPeople" class="check-grid"></div>
+      </div>
+      <label class="field">Details
+        <textarea id="evDesc" rows="4"></textarea>
+      </label>
+      <div class="dialog-actions split">
+        <button type="button" id="evDelete" class="btn danger">Delete</button>
+        <span>
+          <button type="button" id="evCancel" class="btn">Cancel</button>
+          <button type="submit" class="btn primary">Save</button>
+        </span>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="diffDialog" class="wide-dialog">
+    <div class="dlg-form">
+      <h2 id="diffTitle">Compare</h2>
+      <p class="diff-legend"><del>removed since snapshot</del> <ins>added since snapshot</ins> <span id="diffStats"></span></p>
+      <div id="diffBody" class="diff-body"></div>
+      <div class="dialog-actions split">
+        <button id="diffRestore" class="btn">Restore this snapshot</button>
+        <button id="diffClose" class="btn primary">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="sprintDialog">
+    <form method="dialog" class="dlg-form">
+      <h2>Writing sprint</h2>
+      <p class="muted-text">Write without stopping until the timer ends. You'll see how many words you wrote.</p>
+      <div class="sprint-choices" id="sprintChoices">
+        <button type="button" data-min="10">10 min</button>
+        <button type="button" data-min="15">15 min</button>
+        <button type="button" data-min="25">25 min</button>
+        <button type="button" data-min="45">45 min</button>
+      </div>
+      <div class="dialog-actions"><button class="btn" value="cancel">Cancel</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="collabDialog" class="collab-dialog">
+    <div class="dlg-form" id="collabBody"></div>
+  </dialog>
+
+  <dialog id="coverDialog">
+    <div class="dlg-form">
+      <h2>Book cover</h2>
+      <div class="cover-preview" id="coverPreview"></div>
+      <p class="muted-text">JPG, PNG or WebP. Large images are shrunk automatically. The cover shows in your library and on the first page of HTML / PDF exports.</p>
+      <div class="dialog-actions split">
+        <button type="button" id="coverRemove" class="btn danger">Remove cover</button>
+        <span>
+          <button type="button" id="coverUpload" class="btn">Upload image…</button>
+          <button type="button" id="coverDone" class="btn primary">Done</button>
+        </span>
+      </div>
+    </div>
+  </dialog>
+
+  <input type="file" id="fileInput" accept=".json,application/json" hidden>
+ <input type="file" id="backupInput" accept=".json,application/json" hidden>
+  <input type="file" id="coverInput" accept="image/jpeg,image/png,image/webp" hidden>
+  <input type="file" id="textInput" accept=".txt,.md,.markdown,text/plain,text/markdown" hidden>
+
+  <!-- Scripts: shared helpers first, the main app last -->
+  <script src="js/util.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/charmap.js"></script>
+  <script src="js/snapshots.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/habits.js"></script>
+  <script src="js/library.js"></script>
+  <script src="js/comments.js"></script>
+  <script src="js/stickies.js"></script>
+  <script src="js/cover.js"></script>
+  <script src="js/importer.js"></script>
+  <script src="js/cloud.js"></script>
+  <script src="js/collab.js"></script>
+  <script src="js/pwa.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
